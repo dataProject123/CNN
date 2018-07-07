@@ -38,7 +38,7 @@ def load_data(data_path, total_num, batch_num, label_value):
             print("error: file_path[%s] not exist" % file_path)
             sys.exit()
         img = Image.open(file_path)
-        img_ndarray = np.asarray(img, dtype='float64')
+        img_ndarray = np.asarray(img, dtype='float64') / 255
         images[i] = np.ndarray.flatten(img_ndarray)
         labels[i][label_value[file_index]] = 1
     batch[0] = images
@@ -112,7 +112,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 session.run(tf.global_variables_initializer())
 for i in range(20000):
   batch = load_data(data_path + "train", 9999, 50, train_label)
-  if i%100 == 0:
+  if i != 0 and i%100 == 0:
     train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
     print("step %d, training accuracy %g"%(i, train_accuracy))
   train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
