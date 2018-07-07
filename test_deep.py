@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np
 import sys
 import os
+import random
 
 now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
 data_path = now_path + "data/"
@@ -26,13 +27,13 @@ def load_label(file_path):
         return label_list
 
 # 加载图片数据
-def load_data(data_path, start_index, batch_num, label_value):
+def load_data(data_path, total_num, batch_num, label_value):
     batch = [[] for i in range(2)]
     images = np.empty((batch_num, 28 * 28))
     labels = np.zeros((batch_num, 15))
     for i in  range(batch_num):
-        file_index = start_index + i
-        file_path = data_path + "/" + str(start_index + i) + ".png"
+        file_index = random.randint(0, total_num)
+        file_path = data_path + "/" + str(file_index) + ".png"
         if not os.path.exists(file_path):
             print("error: file_path[%s] not exist" % file_path)
             sys.exit()
@@ -110,7 +111,7 @@ correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 session.run(tf.global_variables_initializer())
 for i in range(20000):
-  batch = load_data(data_path + "train", i, 50, train_label)
+  batch = load_data(data_path + "train", 9999, 50, train_label)
   if i%100 == 0:
     train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
     print("step %d, training accuracy %g"%(i, train_accuracy))
