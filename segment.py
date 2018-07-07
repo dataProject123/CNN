@@ -4,11 +4,11 @@ import os
 import sys
 
 now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
-
+create_path = now_path + "create/"
 print(now_path)
-test_image = Image.open(now_path + "test/test.png")# 打开一张验证码
+test_image = Image.open(now_path + "data/segment_test/test.png")# 打开一张验证码
 test_image = test_image.convert("L") # "L"表示灰度图
-test_image.save(now_path + "create/gray.png") # 存储灰度图
+test_image.save(create_path + "gray.png") # 存储灰度图
 
 def get_bin_table(thresold = 170):
     table = []
@@ -90,7 +90,7 @@ def saveSclice(img, vertical, horizontal):
         for left, right in vertical:
             box = (left, top, right, bottom)
             child_image = img.crop(box) # 分割验证码图片
-            child_image.resize((28, 28), Image.ANTIALIAS).save( now_path + "create/" + str(left) + "_" + str(top) + "-" + str(right) + "-" + str(bottom) + ".png") # 存储分割后的图片 
+            child_image.resize((28, 28), Image.ANTIALIAS).save( create_path + str(left) + "_" + str(top) + "-" + str(right) + "-" + str(bottom) + ".png") # 存储分割后的图片 
 
 ver_sclice = vertical(bin_image, 10)
 print(ver_sclice)
