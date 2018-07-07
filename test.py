@@ -8,9 +8,6 @@ import random
 now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
 data_path = now_path + "data/"
 model_path = now_path + "model/"
-if not os.path.exists(data_path):
-    print("error: data_path[%s] not exist" % data_path)
-    sys.exit()
 
 # 加载真值数据
 def load_label(file_path):
@@ -46,11 +43,6 @@ def load_data(data_path, total_num, batch_num, label_value):
     batch[1] = labels
     return batch
 
-# 加载训练数据真值
-train_label = load_label(data_path + "train/label.txt")
-#batch = load_data(data_path + "train", 2, 2, train_label)
-#print(batch)
-#sys.exit()
 session = tf.InteractiveSession()   #InteractiveSession能让你在运行图的时候，插入一些计算图
 #构建计算图可以在外部运行,计算通常会通过其它语言并用更为高效的代码来实现
 
@@ -112,15 +104,9 @@ cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
 train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-session.run(tf.global_variables_initializer())
-for i in range(20000):
-  batch = load_data(data_path + "train", 9999, 50, train_label)
-  if i != 0 and i%100 == 0:
-    train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
-    saver.save(session, model_path + "best.index")
-    print("step %d, training accuracy %g"%(i, train_accuracy))
-  train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
-
-print("test accuracy %g"%accuracy.eval(feed_dict={
-    x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+saver = tf.train.Saver()
+with tf.Session() as session:
+    if not os.path.exists(model_path + ".index"):
+        print("error: model_file not exist")
+    saver.restore(session, model_path)
+    print("test accuracy %g"%accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))

@@ -117,7 +117,7 @@ for i in range(20000):
   batch = load_data(data_path + "train", 9999, 50, train_label)
   if i != 0 and i%100 == 0:
     train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
-    saver.save(session, model_path + "best.index")
+    saver.save(session, model_path)
     print("step %d, training accuracy %g"%(i, train_accuracy))
   train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
