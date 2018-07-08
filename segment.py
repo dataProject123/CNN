@@ -97,10 +97,11 @@ class Segment:
                 # child_image.save(str(left) + "_" + str(top) + "-" + str(right) + "-" + str(bottom) + ".png")
         return sclice
 
-now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
-print(now_path)
-file_path = now_path + "data/segment_test/test.png"
-segment_obj = Segment(file_path=file_path)
-segment_obj.init()
-sclice_list = segment_obj.get_sclice()
-print(len(sclice_list))
+if __name__ == '__main__':
+    now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
+    print(now_path)
+    file_path = now_path + "data/segment_test/test.png"
+    segment_obj = Segment(file_path=file_path)
+    segment_obj.init()
+    sclice_list = segment_obj.get_sclice()
+    print(len(sclice_list))

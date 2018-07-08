@@ -11,7 +11,7 @@ class Network:
         self.model_path = model_path
         self.y_num = y_num
         self.predict_obj = None
-   
+
     def init(self):
         # 构建计算图可以在外部运行,计算通常会通过其它语言并用更为高效的代码来实现
         self.x = tf.placeholder("float", shape=[None, 784]) #placeholder占位符
@@ -72,6 +72,24 @@ class Network:
         batch[1] = labels
         return batch
 
+    def get_new_data(self, data_path, label_value):
+        batch = [[] for i in range(2)]
+        images = np.empty((27, 28 * 28))
+        labels = np.zeros((27, self.y_num))
+        for i in  range(27):
+            file_index = 60000 + i
+            file_path = data_path + "/" + str(file_index) + ".png"
+            if not os.path.exists(file_path):
+                print("error: file_path[%s] not exist" % file_path)
+                sys.exit()
+            img = Image.open(file_path)
+            img_ndarray = np.asarray(img, dtype='float64') / 255
+            images[i] = np.ndarray.flatten(img_ndarray)
+            labels[i][label_value[file_index]] = 1
+        batch[0] = images
+        batch[1] = labels
+        return batch
+    
     def get_neural_network(self): 
         # 一个变量代表着TensorFlow计算图中的一个值，能够在计算过程中使用，甚至进行修改
         # 变量需要通过seesion初始化后，才能在session中使用
@@ -108,9 +126,11 @@ class Network:
         
         return tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-    def train(self):
+    def train(self, total_image_num, batch_size = 50):
         # 加载训练数据真值
         train_label = self.get_label(self.data_path + "train/label.txt")
+        # 加载测试数据真值
+        test_label = self.get_label(self.data_path + "test/label.txt")
         # 定义损失函数
         loss = -tf.reduce_sum(self.y_*tf.log(self.conv_net))
         optimizer = tf.train.AdamOptimizer(learning_rate=0.0001).minimize(loss)
@@ -119,18 +139,23 @@ class Network:
         
         # 所有变量都要进行初始化，不能放到init中
         self.session.run(tf.global_variables_initializer())
-
+        # 获取测试数据
+        test_batch = self.get_batch_data(self.data_path + "test", 9999, 2000, test_label)
+        # 获取新制作的数据
+        new_batch = self.get_batch_data(self.data_path + "train", train_label)
         # 最高准确率
         max_acc = 0
         model_index = 1
         for i in range(400):
-            batch = self.get_batch_data(self.data_path + "train", 9999, 50, train_label)
+            batch = self.get_batch_data(self.data_path + "train", total_image_num, batch_size, train_label)
             self.session.run(optimizer, feed_dict={self.x: batch[0], self.y_: batch[1], self.keep_prob: 0.5})
-            val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: batch[0], self.y_: batch[1], self.keep_prob: 1.0})
+            # 每次迭代都强制训练下新制作的数据
+            self.session.run(optimizer, feed_dict={self.x: new_batch[0], self.y_: new_batch[1], self.keep_prob: 0.5})
+            val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: test_batch[0], self.y_: test_batch[1], self.keep_prob: 1.0})
             #train_acc = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
             #test_correct = correct_prediction.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('epoch:%d, val_loss:%f, val_acc:%f'%(i,val_loss,val_acc))
-            if val_acc > max_acc:
+            if val_acc > 0.8 and val_acc > max_acc:
                 max_acc = val_acc
                 self.saver.save(self.session, self.model_path + 'mnist.ckpt', global_step=model_index)
                 model_index += 1
@@ -138,11 +163,11 @@ class Network:
     def get_predict_obj(self):
         if self.predict_obj == None:
             if not os.path.exists(self.model_path + "checkpoint"):
-                print("error: model_file not exist") 
+                print("error: model_file not exist")
+                sys.exit()
             model_file = tf.train.latest_checkpoint(self.model_path)
             self.saver.restore(self.session, model_file)
             self.predict_obj = tf.argmax(self.conv_net, 1)
-            self.session.run(tf.global_variables_initializer())
         
         return self.predict_obj 
 
@@ -155,7 +180,7 @@ class Network:
         img_ndarray = np.asarray(img, dtype='float64') / 255
         images[0] = np.ndarray.flatten(img_ndarray)
         pred = self.get_predict_obj()
-        test_pred = pred.eval({self.x: images, self.keep_prob: 1})
+        test_pred = pred.eval({self.x: images, self.keep_prob: 1.0})
         return test_pred[0]
     
 
@@ -168,5 +193,5 @@ if __name__ == "__main__" :
         sys.exit()
     network_obj = Network(data_path = data_path, model_path = model_path)
     network_obj.init()
-    network_obj.train()
+    network_obj.train(total_image_num = 59999, batch_size = 100)
 
