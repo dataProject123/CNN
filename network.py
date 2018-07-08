@@ -143,7 +143,7 @@ class Network:
         # 获取测试数据
         test_batch = self.get_batch_data(self.data_path + "test", 9999, 2000, test_label)
         # 获取训练数据
-        training_batch = self.get_batch_data(self.data_path + "training", 0, 150, training_label)
+        training_batch = self.get_batch_data2(self.data_path + "training", 0, 150, training_label)
         # 最高准确率
         max_acc = 0
         model_index = 1

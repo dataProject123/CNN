@@ -13,8 +13,10 @@ class Segment:
     def init(self):
         self.img = Image.open(self.file_path)
         self.gray_img = self.img.convert("L") # "L"表示灰度图
+        self.gray_img.save("create/gray.png")
         self.table = self.get_bin_table() # thresold的值可以自行调节
         self.bin_img  = self.gray_img.point(self.table, '1') # 用重新描点画图的方式得到二值图
+        self.bin_img.save("create/bin.png")
         self.width, self.high = self.bin_img.size
         self.pixdata = self.bin_img.load()
         self.horizontal = self.get_horizontal()
@@ -43,7 +45,7 @@ class Segment:
                     black += 1
             ver_list.append(black)
         
-        #print(ver_list)
+        print(ver_list)
         # 判断边界
         l,r = 0,0
         flag = False
@@ -57,6 +59,7 @@ class Segment:
                 r = i-1
                 flag = False
                 cuts.append((l,r))
+        print(cuts)
         return cuts
     
     def get_horizontal(self):
@@ -91,11 +94,36 @@ class Segment:
         for top, bottom in self.horizontal:
             for left, right in self.vertical:
                 box = (left, top, right, bottom)
+                newImg = Image.new("RGBA", (28, 28), (0, 0, 0))
+                sclice_width = right - left
+                sclice_high = bottom - top
+                ratio_width = 24/sclice_width
+                ratio_high = 24/sclice_high
+                ratio_min = min(ratio_width, ratio_high)
+                new_width = ratio_min * sclice_width
+                new_high = ratio_min * sclice_high
+                newLeft = int(14 - new_width/2)
+                newRight = int(14 + new_width/2)
+                newTop = int(14 - new_high/2)
+                newBottom = int(14 + new_high/2)
+                pix = newImg.load()
+                for i in range(28):
+                    if i < newLeft:
+                        continue
+                    if i > newRight:
+                        continue
+                    for j in range(28):
+                        if j < newTop:
+                            continue
+                        if j > newTop:
+                            continue
+                        pix[i,j] = 255
+                newImg.save("create/newimg.png")
                 child_image = self.bin_img.crop(box) # 分割验证码图片
-                child_image = child_image.resize((28, 28), Image.ANTIALIAS)
+                #child_image = child_image.resize((28, 28), Image.ANTIALIAS)
                 sclice.append(child_image)
                 # 存储分割后的图片
-                # child_image.save(str(left) + "_" + str(top) + "-" + str(right) + "-" + str(bottom) + ".png")
+                #  child_image.save(str(left) + "_" + str(top) + "-" + str(right) + "-" + str(bottom) + ".png")
         return sclice
 
 if __name__ == '__main__':
