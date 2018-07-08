@@ -9,40 +9,6 @@ now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
 data_path = now_path + "data/"
 model_path = now_path + "model/"
 
-# 加载真值数据
-def load_label(file_path):
-    if not os.path.exists(file_path):
-        print("error: file_path[%s] not exist" % file_path)
-        sys.exit()
-    with open(file_path) as f:
-        line = f.readline()
-        line = line.strip('\n')
-        label_list = line.split(',')
-        i = 0
-        while i < len(label_list):
-            label_list[i] = int(label_list[i])
-            i += 1
-        return label_list
-
-# 加载图片数据
-def load_data(data_path, total_num, batch_num, label_value):
-    batch = [[] for i in range(2)]
-    images = np.empty((batch_num, 28 * 28))
-    labels = np.zeros((batch_num, 15))
-    for i in  range(batch_num):
-        file_index = random.randint(0, total_num)
-        file_path = data_path + "/" + str(file_index) + ".png"
-        if not os.path.exists(file_path):
-            print("error: file_path[%s] not exist" % file_path)
-            sys.exit()
-        img = Image.open(file_path)
-        img_ndarray = np.asarray(img, dtype='float64') / 255
-        images[i] = np.ndarray.flatten(img_ndarray)
-        labels[i][label_value[file_index]] = 1
-    batch[0] = images
-    batch[1] = labels
-    return batch
-
 session = tf.InteractiveSession()   #InteractiveSession能让你在运行图的时候，插入一些计算图
 #构建计算图可以在外部运行,计算通常会通过其它语言并用更为高效的代码来实现
 
@@ -100,13 +66,28 @@ y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 # 用于保存训练的最佳模型
 saver = tf.train.Saver()
 #训练和评估
-cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+cost_func = -tf.reduce_sum(y_*tf.log(y_conv))
+optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost_func)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+session.run(tf.global_variables_initializer())
+
 saver = tf.train.Saver()
-with tf.Session() as session:
-    if not os.path.exists(model_path + ".index"):
-        print("error: model_file not exist")
-    saver.restore(session, model_path)
-    print("test accuracy %g"%accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+test_image_file = data_path + "train/1.png"
+images = np.empty((1, 28 * 28))
+labels = np.zeros((1, 15))
+if not os.path.exists(test_image_file):
+    print("error: test_image_file[%s] not exist" % test_image_file)
+    sys.exit()
+img = Image.open(test_image_file)
+img_ndarray = np.asarray(img, dtype='float64') / 255
+images[0] = np.ndarray.flatten(img_ndarray)
+labels[0][2] = 1
+
+if not os.path.exists(model_path + "checkpoint"):
+    print("error: model_file not exist")
+model_file=tf.train.latest_checkpoint(model_path)
+saver.restore(session, model_file)
+test_correct = accuracy.eval(feed_dict={x: images, y_: labels, keep_prob: 1.0})
+session.close()
+print(test_correct)

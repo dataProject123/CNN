@@ -105,22 +105,28 @@ b_fc2 = bias_variable([15])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-# 用于保存训练的最佳模型
-saver = tf.train.Saver()
 #训练和评估
 cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
 train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 session.run(tf.global_variables_initializer())
-for i in range(20000):
+
+# 用于保存训练的最佳模型，最多保存三次训练数据
+saver = tf.train.Saver(max_to_keep=3)
+# 最高准确率
+max_acc = 0
+model_index = 1
+for i in range(400):
   batch = load_data(data_path + "train", 9999, 50, train_label)
   if i != 0 and i%100 == 0:
-    train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
-    saver.save(session, model_path)
-    print("step %d, training accuracy %g"%(i, train_accuracy))
+    train_acc = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
+    print("step %d, training accuracy %g"%(i, train_acc))
+    if train_acc > max_acc:
+        max_acc = train_acc
+        saver.save(session, model_path + 'mnist.ckpt', global_step=model_index)
+        model_index += 1
   train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
 
-print("test accuracy %g"%accuracy.eval(feed_dict={
-    x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+#print("test accuracy %g"%accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
