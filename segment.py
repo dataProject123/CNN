@@ -13,10 +13,9 @@ class Segment:
     def init(self):
         self.img = Image.open(self.file_path)
         self.gray_img = self.img.convert("L") # "L"表示灰度图
-        self.gray_img.save("create/gray.png")
         self.table = self.get_bin_table() # thresold的值可以自行调节
+        self.table2 = self.get_bin_table2() # thresold的值可以自行调节
         self.bin_img  = self.gray_img.point(self.table, '1') # 用重新描点画图的方式得到二值图
-        self.bin_img.save("create/bin.png")
         self.width, self.high = self.bin_img.size
         self.pixdata = self.bin_img.load()
         self.horizontal = self.get_horizontal()
@@ -24,11 +23,21 @@ class Segment:
        
         return True
         
-    # 得到的一个list，其0~threshold项为0，threshold~255项为1
+    # 得到的一个list，其0~threshold项为1，threshold~255项为0
     def get_bin_table(self):
         table = []
         for i in range(256):
             if i > self.bin_threshold:
+                table.append(0)
+            else:
+                table.append(1)
+        return table 
+    
+    # 得到的一个list，其0~threshold项为0，threshold~255项为1
+    def get_bin_table2(self):
+        table = []
+        for i in range(256):
+            if i < self.bin_threshold:
                 table.append(0)
             else:
                 table.append(1)
@@ -55,7 +64,7 @@ class Segment:
             if flag is False and count > self.ver_threshold:
                 l = i
                 flag = True
-            if flag and count < self.ver_threshold:
+            if flag and count <= self.ver_threshold:
                 r = i-1
                 flag = False
                 cuts.append((l,r))
@@ -82,7 +91,7 @@ class Segment:
             if flag is False and count > self.hor_threshold:
                 t = i
                 flag = True
-            if flag and count < self.hor_threshold:
+            if flag and count <= self.hor_threshold:
                 b = i-1
                 flag = False
                 cuts.append((t, b))
@@ -94,7 +103,11 @@ class Segment:
         for top, bottom in self.horizontal:
             for left, right in self.vertical:
                 box = (left, top, right, bottom)
-                newImg = Image.new("RGBA", (28, 28), (0, 0, 0))
+                new_img = Image.new("RGBA", (28, 28), (0, 0, 0))
+                new_img = new_img.convert("L")
+                new_img  = new_img.point(self.table2, '1')
+                sclice.append(new_img)
+                continue
                 sclice_width = right - left
                 sclice_high = bottom - top
                 ratio_width = 24/sclice_width
@@ -131,7 +144,10 @@ if __name__ == '__main__':
     print(now_path)
     #file_path = now_path + "data/segment_test/test.png"
     file_path = now_path + "data/segment_test/test2.png"
-    segment_obj = Segment(file_path=file_path)
+    segment_obj = Segment(file_path=file_path, ver_threshold = 0, hor_threshold = 0)
     segment_obj.init()
     sclice_list = segment_obj.get_sclice()
     print(len(sclice_list))
+    for i in range(len(sclice_list)):
+        img = sclice_list[i]
+        img.save("create/" + str(i) + ".png")
