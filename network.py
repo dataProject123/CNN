@@ -72,12 +72,12 @@ class Network:
         batch[1] = labels
         return batch
 
-    def get_new_data(self, data_path, label_value):
+    def get_batch_data2(self, data_path, start_index, batch_num, label_value):
         batch = [[] for i in range(2)]
-        images = np.empty((27, 28 * 28))
-        labels = np.zeros((27, self.y_num))
-        for i in  range(27):
-            file_index = 60000 + i
+        images = np.empty((batch_num, 28 * 28))
+        labels = np.zeros((batch_num, self.y_num))
+        for i in  range(batch_num):
+            file_index = start_index + i
             file_path = data_path + "/" + str(file_index) + ".png"
             if not os.path.exists(file_path):
                 print("error: file_path[%s] not exist" % file_path)
@@ -129,6 +129,7 @@ class Network:
     def train(self, total_image_num, batch_size = 50):
         # 加载训练数据真值
         train_label = self.get_label(self.data_path + "train/label.txt")
+        training_label = self.get_label(self.data_path + "training/label.txt")
         # 加载测试数据真值
         test_label = self.get_label(self.data_path + "test/label.txt")
         # 定义损失函数
@@ -141,18 +142,17 @@ class Network:
         self.session.run(tf.global_variables_initializer())
         # 获取测试数据
         test_batch = self.get_batch_data(self.data_path + "test", 9999, 2000, test_label)
-        # 获取新制作的数据
-        new_batch = self.get_new_data(self.data_path + "train", train_label)
+        # 获取训练数据
+        training_batch = self.get_batch_data(self.data_path + "training", 0, 150, training_label)
         # 最高准确率
         max_acc = 0
         model_index = 1
-        for i in range(400):
+        for i in range(4):
             #batch = self.get_batch_data(self.data_path + "train", total_image_num, batch_size, train_label)
             #self.session.run(optimizer, feed_dict={self.x: batch[0], self.y_: batch[1], self.keep_prob: 0.5})
-            # 每次迭代都强制训练下新制作的数据
-            self.session.run(optimizer, feed_dict={self.x: new_batch[0], self.y_: new_batch[1], self.keep_prob: 0.5})
-            val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: new_batch[0], self.y_: new_batch[1], self.keep_prob: 1.0})
             #val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: test_batch[0], self.y_: test_batch[1], self.keep_prob: 1.0})
+            self.session.run(optimizer, feed_dict={self.x: training_batch[0], self.y_: training_batch[1], self.keep_prob: 0.5})
+            val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: training_batch[0], self.y_: training_batch[1], self.keep_prob: 1.0})
             #train_acc = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
             #test_correct = correct_prediction.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('epoch:%d, val_loss:%f, val_acc:%f'%(i,val_loss,val_acc))
