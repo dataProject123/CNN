@@ -147,11 +147,12 @@ class Network:
         max_acc = 0
         model_index = 1
         for i in range(400):
-            batch = self.get_batch_data(self.data_path + "train", total_image_num, batch_size, train_label)
-            self.session.run(optimizer, feed_dict={self.x: batch[0], self.y_: batch[1], self.keep_prob: 0.5})
+            #batch = self.get_batch_data(self.data_path + "train", total_image_num, batch_size, train_label)
+            #self.session.run(optimizer, feed_dict={self.x: batch[0], self.y_: batch[1], self.keep_prob: 0.5})
             # 每次迭代都强制训练下新制作的数据
             self.session.run(optimizer, feed_dict={self.x: new_batch[0], self.y_: new_batch[1], self.keep_prob: 0.5})
-            val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: test_batch[0], self.y_: test_batch[1], self.keep_prob: 1.0})
+            val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: new_batch[0], self.y_: new_batch[1], self.keep_prob: 1.0})
+            #val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: test_batch[0], self.y_: test_batch[1], self.keep_prob: 1.0})
             #train_acc = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
             #test_correct = correct_prediction.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
             print('epoch:%d, val_loss:%f, val_acc:%f'%(i,val_loss,val_acc))
@@ -171,18 +172,24 @@ class Network:
         
         return self.predict_obj 
 
-    def predict(self, image_file_path):
-        if not os.path.exists(image_file_path):
-            print("error: image_file_path[%s] not exist" % image_file_path)
+    def predictByImageObj(self, img):
+        if img is None:
+            print("error: img is none")
             sys.exit()
         images = np.empty((1, 28 * 28))
-        img = Image.open(image_file_path)
         img_ndarray = np.asarray(img, dtype='float64') / 255
         images[0] = np.ndarray.flatten(img_ndarray)
         pred = self.get_predict_obj()
         test_pred = pred.eval({self.x: images, self.keep_prob: 1.0})
         return test_pred[0]
     
+    def predictByImagePath(self, image_file_path):
+        if not os.path.exists(image_file_path):
+            print("error: image_file_path[%s] not exist" % image_file_path)
+            sys.exit()
+        img = Image.open(image_file_path)
+        
+        return self.predictByImageObj(img)
 
 if __name__ == "__main__" :
     now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录

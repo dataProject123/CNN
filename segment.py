@@ -19,14 +19,14 @@ class Segment:
         self.pixdata = self.bin_img.load()
         self.horizontal = self.get_horizontal()
         self.vertical = self.get_vertical()
-
+       
         return True
         
     # 得到的一个list，其0~threshold项为0，threshold~255项为1
     def get_bin_table(self):
         table = []
         for i in range(256):
-            if i < self.bin_threshold:
+            if i > self.bin_threshold:
                 table.append(0)
             else:
                 table.append(1)
@@ -42,7 +42,8 @@ class Segment:
                 if self.pixdata[x,y] == 0:
                     black += 1
             ver_list.append(black)
-    
+        
+        #print(ver_list)
         # 判断边界
         l,r = 0,0
         flag = False
@@ -100,7 +101,8 @@ class Segment:
 if __name__ == '__main__':
     now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
     print(now_path)
-    file_path = now_path + "data/segment_test/test.png"
+    #file_path = now_path + "data/segment_test/test.png"
+    file_path = now_path + "data/segment_test/test2.png"
     segment_obj = Segment(file_path=file_path)
     segment_obj.init()
     sclice_list = segment_obj.get_sclice()
