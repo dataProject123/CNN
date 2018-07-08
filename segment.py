@@ -15,7 +15,7 @@ class Segment:
         self.gray_img = self.img.convert("L") # "L"表示灰度图
         self.table = self.get_bin_table() # thresold的值可以自行调节
         self.table2 = self.get_bin_table2() # thresold的值可以自行调节
-        self.bin_img  = self.gray_img.point(self.table, '1') # 用重新描点画图的方式得到二值图
+        self.bin_img  = self.gray_img.point(self.table2, '1') # 用重新描点画图的方式得到二值图
         self.width, self.high = self.bin_img.size
         self.pixdata = self.bin_img.load()
         self.horizontal = self.get_horizontal()
@@ -48,11 +48,11 @@ class Segment:
         ver_list = []
         # 开始投影
         for x in range(self.width):
-            black = 0
+            special = 0
             for y in range(self.high):
-                if self.pixdata[x,y] == 0:
-                    black += 1
-            ver_list.append(black)
+                if self.pixdata[x,y] > 0:
+                    special += 1
+            ver_list.append(special)
         
         print(ver_list)
         # 判断边界
@@ -60,7 +60,6 @@ class Segment:
         flag = False
         cuts = []
         for i,count in enumerate(ver_list):
-            # 阈值这里为0
             if flag is False and count > self.ver_threshold:
                 l = i
                 flag = True
@@ -68,7 +67,7 @@ class Segment:
                 r = i-1
                 flag = False
                 cuts.append((l,r))
-        print(cuts)
+        
         return cuts
     
     def get_horizontal(self):
@@ -76,18 +75,17 @@ class Segment:
         hor_list = []
         # 开始投影
         for y in range(self.high):
-            black = 0
+            special = 0
             for x in range(self.width):
-                if self.pixdata[x,y] == 0:
-                    black += 1
-            hor_list.append(black)
+                if self.pixdata[x,y] > 0:
+                    special += 1
+            hor_list.append(special)
     
         # 判断边界
         t, b = 0,0
         flag = False
         cuts = []
         for i, count in enumerate(hor_list):
-            # 阈值这里为0
             if flag is False and count > self.hor_threshold:
                 t = i
                 flag = True
@@ -103,34 +101,37 @@ class Segment:
         for top, bottom in self.horizontal:
             for left, right in self.vertical:
                 box = (left, top, right, bottom)
+                width_buffer = 2
+                high_buffer = 2
                 new_img = Image.new("RGBA", (28, 28), (0, 0, 0))
                 new_img = new_img.convert("L")
                 new_img  = new_img.point(self.table2, '1')
-                sclice.append(new_img)
-                continue
                 sclice_width = right - left
                 sclice_high = bottom - top
-                ratio_width = 24/sclice_width
-                ratio_high = 24/sclice_high
+                ratio_width = (28 - width_buffer * 2)/sclice_width
+                ratio_high = (28 - high_buffer * 2)/sclice_high
                 ratio_min = min(ratio_width, ratio_high)
                 new_width = ratio_min * sclice_width
                 new_high = ratio_min * sclice_high
-                newLeft = int(14 - new_width/2)
-                newRight = int(14 + new_width/2)
-                newTop = int(14 - new_high/2)
-                newBottom = int(14 + new_high/2)
-                pix = newImg.load()
+                new_left = int(14 - new_width/2)
+                new_right = int(14 + new_width/2)
+                new_top = int(14 - new_high/2)
+                new_bottom = int(14 + new_high/2)
+                print("%d, %d, %d, %d" % (new_top, new_bottom, new_left, new_right))
+                pix = new_img.load()
                 for i in range(28):
-                    if i < newLeft:
+                    if i < new_left:
                         continue
-                    if i > newRight:
+                    if i > new_right:
                         continue
                     for j in range(28):
-                        if j < newTop:
+                        if j < new_top:
                             continue
-                        if j > newTop:
+                        if j > new_bottom:
                             continue
                         pix[i,j] = 255
+                sclice.append(new_img)
+                continue
                 newImg.save("create/newimg.png")
                 child_image = self.bin_img.crop(box) # 分割验证码图片
                 #child_image = child_image.resize((28, 28), Image.ANTIALIAS)
