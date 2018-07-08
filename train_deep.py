@@ -51,9 +51,8 @@ train_label = load_label(data_path + "train/label.txt")
 #batch = load_data(data_path + "train", 2, 2, train_label)
 #print(batch)
 #sys.exit()
-session = tf.InteractiveSession()   #InteractiveSession能让你在运行图的时候，插入一些计算图
-#构建计算图可以在外部运行,计算通常会通过其它语言并用更为高效的代码来实现
 
+#构建计算图可以在外部运行,计算通常会通过其它语言并用更为高效的代码来实现
 x = tf.placeholder("float", shape=[None, 784]) #placeholder占位符
 y_ = tf.placeholder("float", shape=[None, 15])
 
@@ -105,11 +104,13 @@ b_fc2 = bias_variable([15])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-#训练和评估
-cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+# 定义损失函数
+loss = -tf.reduce_sum(y_*tf.log(y_conv))
+optimizer = tf.train.AdamOptimizer(learning_rate=0.0001).minimize(loss)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+
+session = tf.InteractiveSession()   #InteractiveSession能让你在运行图的时候，插入一些计算图
 session.run(tf.global_variables_initializer())
 
 # 用于保存训练的最佳模型，最多保存三次训练数据
@@ -118,15 +119,15 @@ saver = tf.train.Saver(max_to_keep=3)
 max_acc = 0
 model_index = 1
 for i in range(400):
-  batch = load_data(data_path + "train", 9999, 50, train_label)
-  if i != 0 and i%100 == 0:
-    train_acc = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
-    print("step %d, training accuracy %g"%(i, train_acc))
-    if train_acc > max_acc:
-        max_acc = train_acc
+    batch = load_data(data_path + "train", 9999, 50, train_label)
+    session.run(optimizer, feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+    val_loss, val_acc = session.run([loss, accuracy], feed_dict={x: batch[0], y_: batch[1], keep_prob: 1})
+    #train_acc = accuracy.eval(feed_dict={x:batch[0], y_: batch[1], keep_prob: 1.0})
+    print('epoch:%d, val_loss:%f, val_acc:%f'%(i,val_loss,val_acc))
+    if val_acc > max_acc:
+        max_acc = val_acc
         saver.save(session, model_path + 'mnist.ckpt', global_step=model_index)
         model_index += 1
-  train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
 
 #print("test accuracy %g"%accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
