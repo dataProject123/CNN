@@ -142,7 +142,7 @@ class Network:
         # 获取测试数据
         test_batch = self.get_batch_data(self.data_path + "test", 9999, 2000, test_label)
         # 获取新制作的数据
-        new_batch = self.get_batch_data(self.data_path + "train", train_label)
+        new_batch = self.get_new_data(self.data_path + "train", train_label)
         # 最高准确率
         max_acc = 0
         model_index = 1
