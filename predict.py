@@ -9,9 +9,7 @@ now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
 data_path = now_path + "data/"
 model_path = now_path + "model/"
 
-session = tf.InteractiveSession()   #InteractiveSession能让你在运行图的时候，插入一些计算图
 #构建计算图可以在外部运行,计算通常会通过其它语言并用更为高效的代码来实现
-
 x = tf.placeholder("float", shape=[None, 784]) #placeholder占位符
 y_ = tf.placeholder("float", shape=[None, 15])
 
@@ -66,10 +64,12 @@ y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 # 用于保存训练的最佳模型
 saver = tf.train.Saver()
 #训练和评估
-cost_func = -tf.reduce_sum(y_*tf.log(y_conv))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost_func)
+loss = -tf.reduce_sum(y_*tf.log(y_conv))
+optimizer = tf.train.AdamOptimizer(1e-4).minimize(loss)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+
+session = tf.InteractiveSession()
 session.run(tf.global_variables_initializer())
 
 saver = tf.train.Saver()
@@ -88,6 +88,7 @@ if not os.path.exists(model_path + "checkpoint"):
     print("error: model_file not exist")
 model_file=tf.train.latest_checkpoint(model_path)
 saver.restore(session, model_file)
-test_correct = accuracy.eval(feed_dict={x: images, y_: labels, keep_prob: 1.0})
+test_pred = tf.argmax(y_conv, 1).eval({x: images, keep_prob: 1})
+#test_correct = correct_prediction.eval(feed_dict={x: images, y_: labels, keep_prob: 1})
 session.close()
-print(test_correct)
+print(test_pred[0])
