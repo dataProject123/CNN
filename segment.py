@@ -54,7 +54,7 @@ class Segment:
                     special += 1
             ver_list.append(special)
         
-        print(ver_list)
+        #print(ver_list)
         # 判断边界
         l,r = 0,0
         flag = False
@@ -100,44 +100,34 @@ class Segment:
         sclice = []
         for top, bottom in self.horizontal:
             for left, right in self.vertical:
-                box = (left, top, right, bottom)
                 width_buffer = 2
                 high_buffer = 2
-                new_img = Image.new("RGBA", (28, 28), (0, 0, 0))
-                new_img = new_img.convert("L")
-                new_img  = new_img.point(self.table2, '1')
-                sclice_width = right - left
-                sclice_high = bottom - top
+                sclice_width = right - left + 1
+                sclice_high = bottom - top + 1
                 ratio_width = (28 - width_buffer * 2)/sclice_width
                 ratio_high = (28 - high_buffer * 2)/sclice_high
                 ratio_min = min(ratio_width, ratio_high)
-                new_width = ratio_min * sclice_width
-                new_high = ratio_min * sclice_high
+                new_width = int(ratio_min * sclice_width)
+                new_high = int(ratio_min * sclice_high)
+                
+                # 分割图片框
+                box = (left, top, right, bottom)
+                # 分割提取图片
+                child_image = self.bin_img.crop(box)
+                # 等比例缩放
+                child_image = child_image.resize((new_width, new_high), Image.ANTIALIAS)
+                # 新建一张底色图片
+                new_img = Image.new("RGBA", (28, 28), (0, 0, 0))
+                new_img = new_img.convert("L")
+                new_img  = new_img.point(self.table2, '1')
                 new_left = int(14 - new_width/2)
                 new_right = int(14 + new_width/2)
                 new_top = int(14 - new_high/2)
                 new_bottom = int(14 + new_high/2)
-                print("%d, %d, %d, %d" % (new_top, new_bottom, new_left, new_right))
-                pix = new_img.load()
-                for i in range(28):
-                    if i < new_left:
-                        continue
-                    if i > new_right:
-                        continue
-                    for j in range(28):
-                        if j < new_top:
-                            continue
-                        if j > new_bottom:
-                            continue
-                        pix[i,j] = 255
+                # 将底图和切割图进行合并处理
+                new_img.paste(child_image, (new_left, new_top, new_right, new_bottom))
                 sclice.append(new_img)
-                continue
-                newImg.save("create/newimg.png")
-                child_image = self.bin_img.crop(box) # 分割验证码图片
-                #child_image = child_image.resize((28, 28), Image.ANTIALIAS)
-                sclice.append(child_image)
-                # 存储分割后的图片
-                #  child_image.save(str(left) + "_" + str(top) + "-" + str(right) + "-" + str(bottom) + ".png")
+        
         return sclice
 
 if __name__ == '__main__':

@@ -143,11 +143,11 @@ class Network:
         # 获取测试数据
         test_batch = self.get_batch_data(self.data_path + "test", 9999, 2000, test_label)
         # 获取训练数据
-        training_batch = self.get_batch_data2(self.data_path + "training", 0, 150, training_label)
+        training_batch = self.get_batch_data2(self.data_path + "training", 0, 154, training_label)
         # 最高准确率
         max_acc = 0
         model_index = 1
-        for i in range(4):
+        for i in range(400):
             #batch = self.get_batch_data(self.data_path + "train", total_image_num, batch_size, train_label)
             #self.session.run(optimizer, feed_dict={self.x: batch[0], self.y_: batch[1], self.keep_prob: 0.5})
             #val_loss, val_acc = self.session.run([loss, accuracy], feed_dict={self.x: test_batch[0], self.y_: test_batch[1], self.keep_prob: 1.0})

@@ -1,0 +1,4 @@
+model_checkpoint_path: "/opt/codes/deep_learning/number_recognition/CNN/model/mnist.ckpt-17"
+all_model_checkpoint_paths: "/opt/codes/deep_learning/number_recognition/CNN/model/mnist.ckpt-15"
+all_model_checkpoint_paths: "/opt/codes/deep_learning/number_recognition/CNN/model/mnist.ckpt-16"
+all_model_checkpoint_paths: "/opt/codes/deep_learning/number_recognition/CNN/model/mnist.ckpt-17"
