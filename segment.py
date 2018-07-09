@@ -15,7 +15,8 @@ class Segment:
         self.gray_img = self.img.convert("L") # "L"表示灰度图
         self.table = self.get_bin_table() # thresold的值可以自行调节
         self.table2 = self.get_bin_table2() # thresold的值可以自行调节
-        self.bin_img  = self.gray_img.point(self.table2, '1') # 用重新描点画图的方式得到二值图
+        #self.bin_img  = self.gray_img.point(self.table2, '1') # 用重新描点画图的方式得到二值图
+        self.bin_img = self.gray_img
         self.width, self.high = self.bin_img.size
         self.pixdata = self.bin_img.load()
         self.horizontal = self.get_horizontal()
@@ -42,7 +43,7 @@ class Segment:
             else:
                 table.append(1)
         return table 
-
+    
     def get_vertical(self):
         """传入二值化后的图片进行垂直投影"""
         ver_list = []
@@ -119,7 +120,7 @@ class Segment:
                 # 新建一张底色图片
                 new_img = Image.new("RGBA", (28, 28), (0, 0, 0))
                 new_img = new_img.convert("L")
-                new_img  = new_img.point(self.table2, '1')
+                #new_img  = new_img.point(self.table2, '1')
                 new_left = int(14 - new_width/2)
                 new_right = int(14 + new_width/2)
                 new_top = int(14 - new_high/2)
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     now_path = str(os.getcwd()).replace('\\','/') + "/" #得到当前目录
     print(now_path)
     #file_path = now_path + "data/segment_test/test.png"
-    file_path = now_path + "data/segment_test/test2.png"
+    file_path = now_path + "data/segment_test/test3.png"
     segment_obj = Segment(file_path=file_path, ver_threshold = 0, hor_threshold = 0)
     segment_obj.init()
     sclice_list = segment_obj.get_sclice()
